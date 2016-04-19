@@ -14,11 +14,21 @@ import android.view.MenuItem;
 public class MainActivity extends AppCompatActivity {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
+    private final String FORECASTFRAGMENT_TAG = "FFTAG";
+
+    private String mLocation;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mLocation = Utility.getPreferredLocation(this);
         setContentView(R.layout.activity_main);
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.toolbar, new ForecastFragment(), FORECASTFRAGMENT_TAG);
+        }
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -41,13 +51,32 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
         }
-        if(id == R.id.action_map){
+        if (id == R.id.action_map) {
             openPreferredLocationInMap();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
-    private void openPreferredLocationInMap(){
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String location = Utility.getPreferredLocation(this);
+        Log.d(LOG_TAG, "main activity resumed");
+        Log.e(LOG_TAG, mLocation);
+
+
+        if (location != null && !location.equals(mLocation)) {
+            ForecastFragment ff = (ForecastFragment) getSupportFragmentManager().findFragmentByTag(FORECASTFRAGMENT_TAG);
+            if (null != ff) {
+                ff.onLocationChanged();
+            }
+            Log.d(LOG_TAG, location);
+            mLocation = location;
+        }
+    }
+
+    private void openPreferredLocationInMap() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String location = prefs.getString(
                 getString(R.string.pref_location_key),
